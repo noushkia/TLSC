@@ -1,4 +1,3 @@
-import asyncio
 import configparser
 import logging
 from pathlib import Path
@@ -40,7 +39,7 @@ async def inspect_many_blocks(
         before_block_number: int,
         host: str,
         inspect_db_session: orm.Session,
-) -> None:
+):
     logs_path = Path(config['logs']['logs_path']) / config['logs']['inspectors_log_path'] / f"inspector_{host}.log"
     logger.addHandler(get_handler(logs_path, formatter, rotate=True))
 
@@ -50,16 +49,16 @@ async def inspect_many_blocks(
     for block_number in range(after_block_number, before_block_number):
         logger.debug(f"Block: {block_number} -- Getting block data")
 
-        block_transactions = await asyncio.gather(_fetch_block_transactions(web3, block_number))
+        block_transactions = await _fetch_block_transactions(web3, block_number)
 
-        for tx_hash in block_transactions[0]:
+        for tx_hash in block_transactions:
             tx = await web3.eth.get_transaction(tx_hash)
 
             if tx['to'] is None:
                 receipt = await web3.eth.get_transaction_receipt(tx_hash)
                 contract_address = receipt['contractAddress']
-                bytecode = await asyncio.gather(_fetch_contract_code(web3, contract_address, block_number))
-                bytecode = bytecode[0].hex()
+                bytecode = await _fetch_contract_code(web3, contract_address, block_number)
+                bytecode = bytecode.hex()
                 # Ignore empty bytecodes
                 if bytecode == "0x":
                     continue
