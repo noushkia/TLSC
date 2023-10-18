@@ -75,6 +75,7 @@ async def inspect_many_blocks(
 
                 logger.debug(f"Block: {block_number} -- Contract: {contract_address} -- Check TL")
 
+                # todo: optimize this (look for potential time lock in bytecode no need to decode all of it)
                 if not bytecode_has_time_lock(bytecode):
                     continue
 
