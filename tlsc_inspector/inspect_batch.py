@@ -7,7 +7,7 @@ from eth_utils import to_checksum_address
 from sqlalchemy import orm
 from web3 import Web3
 
-from tlsc_inspector.analyzer.time_lock_detector import check_bytecode_time_lock
+from tlsc_inspector.analyzer.time_lock_detector import bytecode_has_time_lock
 from tlsc_inspector.contract.crud import write_contracts
 from tlsc_inspector.contract.model import Contract
 from tlsc_inspector.utils import get_handler
@@ -73,8 +73,12 @@ async def inspect_many_blocks(
                 if bytecode == "0x":
                     continue
 
-                if not check_bytecode_time_lock(bytecode):
+                logger.debug(f"Block: {block_number} -- Contract: {contract_address} -- Check TL")
+
+                if not bytecode_has_time_lock(bytecode):
                     continue
+
+                logger.debug(f"Block: {block_number} -- Contract: {contract_address} -- Append tlscs")
 
                 all_tlscs.append(Contract(
                     contract_address=contract_address,

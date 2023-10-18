@@ -6,4 +6,3 @@ SQLAlchemy~=2.0.22
 aiohttp~=3.8.6
 web3~=6.11.0
 hexbytes~=0.3.1
-evmdasm~=0.1.10
