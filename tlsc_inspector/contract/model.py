@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, Text, String
 
-from tlsc_inspector.Contract.base import Base
+from tlsc_inspector.contract.base import Base
 
 
 class Contract(Base):

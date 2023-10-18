@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, orm
 from sqlalchemy.orm import sessionmaker
-from tlsc_inspector.Contract.base import Base
+from tlsc_inspector.contract.base import Base
 
 
 def get_inspect_database_uri():
@@ -41,3 +41,11 @@ def create_tables():
     # if debug mode:
     # Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
+
+# remove duplicate contracts:
+# DELETE FROM tlsc
+# WHERE contract_address NOT IN (
+#     SELECT MIN(contract_address)
+#     FROM contracts
+#     GROUP BY bytecode
+# );

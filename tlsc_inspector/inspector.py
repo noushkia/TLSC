@@ -11,7 +11,7 @@ from web3 import Web3
 from web3.eth import AsyncEth
 
 from tlsc_inspector.inspect_batch import inspect_many_blocks
-from tlsc_inspector.Contract.model import Contract
+from tlsc_inspector.contract.model import Contract
 from tlsc_inspector.provider import get_base_provider
 
 config = configparser.ConfigParser()
@@ -26,7 +26,10 @@ def _get_last_inspected_block(session: Session, after_block: int, before_block: 
     """
     Gets the last block that was inspected and stored on DB.
     Might be better to modify it and move it to pre-exec stages.
-    TODO: Just a single SC table is enough, I'll add the block number as a column
+    :param session: DB session
+    :param after_block: The block to start inspecting from
+    :param before_block: The block to stop inspecting at
+    :return: The last block that was inspected
     """
     latest_block = session.query(Contract.block_number) \
         .filter(Contract.block_number < before_block) \

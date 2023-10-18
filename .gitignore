@@ -162,3 +162,7 @@ cython_debug/
 *.csv
 /log
 .idea
+
+# Verified Analysis
+verified-smart-contracts
+verified_scs.ipynb
