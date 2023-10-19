@@ -23,6 +23,12 @@ console_handler.setFormatter(formatter)
 
 logger.addHandler(console_handler)
 
+OLDEST_BLOCK = 15649595  # first tlsc on October 2022
+
+
+async def _fetch_contract_tx_count(w3, contract_address: str) -> int:
+    return await w3.eth.get_transaction_count(contract_address, block_identifier=OLDEST_BLOCK)
+
 
 async def _fetch_latest_contract_transactions(w3, contract_address: str) -> List:
     return []
@@ -41,37 +47,43 @@ async def inspect_many_contracts(
     logs_path = Path(config['logs']['logs_path']) / config['logs']['inspectors_log_path'] / f"inspector_{host}.log"
     logger.addHandler(get_log_handler(logs_path, formatter, rotate=True))
 
-    # largest tx hash, largest tx value, largest tx block number, contract ETH balance
+    # largest tx hash, largest tx value, largest tx tlsc number, contract ETH balance
     all_info: List[ContractInfo] = []
 
     logger.info(f"{host}: Inspecting {len(contracts)} contracts")
     for contract_address in contracts:
         logger.debug(f"Contract: {contract_address} -- Getting contract data")
 
-        contract_transactions = await _fetch_latest_contract_transactions(web3, contract_address)
-        contract_balance = await _fetch_contract_eth_balance(web3, contract_address)
-        largest_tx_value = 0
+        latest_tx_cnt = await _fetch_contract_tx_count(web3, contract_address)
 
-        for tx_hash in contract_transactions:
-            # get the largest transaction for each contract
-            tx = await web3.eth.get_transaction(tx_hash)
+        if latest_tx_cnt == 0:
+            continue
 
-            # get the largest transaction value
-            if tx['value'] > largest_tx_value:
-                largest_tx_value = tx['value']
-                largest_tx_value_hash = tx_hash
-                largest_tx_value_block_number = tx['blockNumber']
+    contract_transactions = await _fetch_latest_contract_transactions(web3, contract_address)
+    contract_balance = await _fetch_contract_eth_balance(web3, contract_address)
+    largest_tx_value = 0
 
-                all_info.append(
-                    ContractInfo(
-                        address=contract_address,
-                        largest_tx_hash=largest_tx_value_hash,
-                        largest_tx_value=largest_tx_value,
-                        largest_tx_block_number=largest_tx_value_block_number,
-                        eth_balance=contract_balance,
-                    )
+    for tx_hash in contract_transactions:
+        # get the largest transaction for each contract
+        tx = await web3.eth.get_transaction(tx_hash)
+
+        # get the largest transaction value
+        if tx['value'] > largest_tx_value:
+            largest_tx_value = tx['value']
+            largest_tx_value_hash = tx_hash
+            largest_tx_value_block_number = tx['blockNumber']
+
+            all_info.append(
+                ContractInfo(
+                    address=contract_address,
+                    largest_tx_hash=largest_tx_value_hash,
+                    largest_tx_value=largest_tx_value,
+                    largest_tx_block_number=largest_tx_value_block_number,
+                    eth_balance=contract_balance,
                 )
-        # print(all_info)
-        logger.debug("Writing to DB")
-        # write_contracts_info(all_info, inspect_db_session)
-        logger.debug("Writing done")
+            )
+
+    logger.debug("Writing to DB")
+    print(all_info)
+    # write_contracts_info(all_info, inspect_db_session)
+    logger.debug("Writing done")
