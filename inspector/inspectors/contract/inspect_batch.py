@@ -71,7 +71,7 @@ async def inspect_many_contracts(
                         eth_balance=contract_balance,
                     )
                 )
-        print(all_info)
+        # print(all_info)
         logger.debug("Writing to DB")
         # write_contracts_info(all_info, inspect_db_session)
         logger.debug("Writing done")

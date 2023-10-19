@@ -61,7 +61,7 @@ def _inspect_many_contracts(
         max_concurrency: int = 1,
         request_timeout: int = 500,
 ):
-    logger.info(f"Starting up inspector {rpc} for contracts {contract_addresses}")
+    logger.info(f"Starting up inspector {rpc} for {len(contract_addresses)} contracts")
     inspect_db_session = get_inspect_session()
 
     inspector = ContractInspector(
