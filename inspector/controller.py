@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from typing import List
 
-from inspector.inspectors.block.block import BlockInspector
+from inspector.inspectors.tlsc.tlsc import TLSCInspector
 from inspector.inspectors.contract.contract import ContractInspector
 from inspector.utils import get_log_handler
 from utils.db import get_inspect_session, create_tables
@@ -39,7 +39,7 @@ def _inspect_many_blocks(
     logger.info(f"Starting up inspector {rpc} for blocks {after_block} to {before_block}")
     inspect_db_session = get_inspect_session()
 
-    inspector = BlockInspector(
+    inspector = TLSCInspector(
         rpc,
         max_concurrency=max_concurrency,
         request_timeout=request_timeout,

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from inspector.base import Inspector
 from inspector.models.contract.model import Contract
-from inspector.inspectors.block.inspect_batch import inspect_many_blocks
+from inspector.inspectors.tlsc.inspect_batch import inspect_many_blocks
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -39,7 +39,7 @@ def _get_last_inspected_block(session: Session, after_block: int, before_block: 
     return after_block
 
 
-class BlockInspector(Inspector):
+class TLSCInspector(Inspector):
 
     async def inspect_many(
             self,

@@ -3,7 +3,6 @@ import logging
 from pathlib import Path
 from typing import List
 
-from eth_utils import to_checksum_address
 from sqlalchemy import orm
 from web3 import Web3
 
