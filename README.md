@@ -9,7 +9,16 @@ A tool that finds smart contracts with time locks on Ethereum main-net
 - [Install](#install)
 - [Usage](#usage)
     - [RPC Finder](#rpc-finder)
-    - [Time Lock Inspector](#time-lock-inspector)
+    - [Time Lock Inspector](#time-lock-smart-contract-inspector)
+    - [Contract Inspector](#contract-inspector)
+    - [Block Inspector](#block-inspector)
+    - [Database](#database)
+- [Maintainers](#maintainers)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+- [References](#references)
+- [TODO](#todo)
 
 ## Install
 
@@ -81,7 +90,7 @@ requests and are up-to-date, run the following command:
   python rpc_finder/rpc_vitals_check.py
 ```
 
-### Time Lock Inspector
+### Time Lock Smart Contract Inspector
 
 The tlsc_inspector package is used to inspect a given range of Ethereum blocks for contracts that have time locks.
 It first fetches the list of all running RPC endpoints from erigon_sorted_hosts.csv file.
@@ -130,5 +139,6 @@ Each entry of the database has the following fields:
 In order to inspect a given set of contracts, run the following command:
 
 ```bash
-  python inspect_many.py -c CONTRACT_ADDRESSES
+  python inspect_many.py -mc PATH_TO_CONTRACTS_CSV_FILE -p NUMBER_OF_PROCESSES
 ```
+
