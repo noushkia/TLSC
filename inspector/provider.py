@@ -1,6 +1,6 @@
 from web3 import AsyncHTTPProvider, Web3
 
-from tlsc_inspector.retry import http_retry_with_backoff_request_middleware
+from inspector.retry import http_retry_with_backoff_request_middleware
 
 
 def get_base_provider(rpc: str, request_timeout: int = 500) -> Web3.AsyncHTTPProvider:

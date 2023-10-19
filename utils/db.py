@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, orm
 from sqlalchemy.orm import sessionmaker
-from tlsc_inspector.contract.base import Base
+from inspector.models.base import Base
 
 
 def get_inspect_database_uri():

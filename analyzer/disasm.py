@@ -2,7 +2,7 @@ import re
 from functools import lru_cache
 from typing import List
 
-from tlsc_inspector.analyzer.opcodes import ADDRESS_OPCODE_MAPPING
+from analyzer.opcodes import ADDRESS_OPCODE_MAPPING
 
 regex_PUSH = re.compile(r"^PUSH(\d*)$")
 

@@ -7,10 +7,10 @@ from eth_utils import to_checksum_address
 from sqlalchemy import orm
 from web3 import Web3
 
-from tlsc_inspector.analyzer.time_lock_detector import bytecode_has_time_lock
-from tlsc_inspector.contract.crud import write_contracts
-from tlsc_inspector.contract.model import Contract
-from tlsc_inspector.utils import get_handler
+from analyzer.time_lock_detector import bytecode_has_time_lock
+from inspector.models.contract.crud import write_contracts
+from inspector.models.contract.model import Contract
+from inspector.utils import get_log_handler
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -35,14 +35,6 @@ async def _fetch_contract_code(w3, contract_address: str, block_number: int) -> 
     return await w3.eth.get_code(account=contract_address, block_identifier=block_number)
 
 
-# Todo: get contract balance
-def get_contract_eth_balance(w3, contract_address):
-    checksum_address = to_checksum_address(contract_address)
-    balance_in_wei = w3.eth.getBalance(checksum_address)
-    balance_in_eth = w3.fromWei(balance_in_wei, 'ether')
-    return balance_in_eth
-
-
 async def inspect_many_blocks(
         web3: Web3,
         after_block_number: int,
@@ -51,7 +43,7 @@ async def inspect_many_blocks(
         inspect_db_session: orm.Session,
 ):
     logs_path = Path(config['logs']['logs_path']) / config['logs']['inspectors_log_path'] / f"inspector_{host}.log"
-    logger.addHandler(get_handler(logs_path, formatter, rotate=True))
+    logger.addHandler(get_log_handler(logs_path, formatter, rotate=True))
 
     all_tlscs: List[Contract] = []
 

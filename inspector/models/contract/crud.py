@@ -2,7 +2,7 @@ from typing import List
 
 from sqlalchemy import orm
 
-from tlsc_inspector.contract.model import Contract
+from inspector.models.contract.model import Contract
 
 
 def write_contracts(

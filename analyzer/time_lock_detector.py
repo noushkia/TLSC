@@ -1,6 +1,6 @@
 from typing import List
 
-from tlsc_inspector.analyzer.disasm import disassemble
+from analyzer.disasm import disassemble
 
 
 def bytecode_has_time_lock(bytecode: str) -> bool:
