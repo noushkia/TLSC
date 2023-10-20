@@ -26,7 +26,7 @@ logger.addHandler(console_handler)
 
 
 async def _fetch_block_transactions(w3, block_number: int) -> List:
-    block_json = await w3.eth.get_block(block_identifier=block_number, full_transactions=False)
+    block_json = await w3.eth.get_block(block_identifier=block_number, full_transactions=True)
     return block_json["transactions"]
 
 
@@ -52,11 +52,10 @@ async def inspect_many_blocks(
 
         block_transactions = await _fetch_block_transactions(web3, block_number)
 
-        for tx_hash in block_transactions:
-            tx = await web3.eth.get_transaction(tx_hash)
+        for tx in block_transactions:
             # else, check if it's from an already known contract
             if tx['to'] is None:
-                receipt = await web3.eth.get_transaction_receipt(tx_hash)
+                receipt = await web3.eth.get_transaction_receipt(tx['hash'])
                 contract_address = receipt['contractAddress']
                 bytecode = await _fetch_contract_code(web3, contract_address, block_number)
                 bytecode = bytecode.hex()
