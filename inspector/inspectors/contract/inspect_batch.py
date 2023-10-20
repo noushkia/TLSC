@@ -33,6 +33,7 @@ async def _fetch_contract_tx_count(w3, contract_address: str) -> int:
 
 
 async def _fetch_latest_contract_transactions(w3, contract_address: str, latest_tx_cnt: int) -> List:
+    # https: // docs.etherscan.io / api - endpoints / accounts # get-a-list-of-normal-transactions-by-address
     checksum_contract_address = Web3.to_checksum_address(contract_address)
 
     # todo: Iterate over all blocks and get the transactions based on address values
@@ -70,8 +71,8 @@ async def inspect_many_contracts(
     # largest tx hash, largest tx value, largest tx block number, contract ETH balance
     all_info: List[ContractInfo] = []
 
-    logger.info(f"{host}: Inspecting {len(contracts)} contracts")
-    for contract_address in contracts:
+    logger.info(f"{host}: Inspecting contracts {contracts[0][0]} to {contracts[-1][0]}")
+    for index, contract_address in contracts:
         logger.debug(f"Contract: {contract_address} -- Getting contract data")
 
         try:

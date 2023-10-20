@@ -4,7 +4,7 @@ import traceback
 import asyncio
 import logging
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 from inspector.inspectors.tlsc.tlsc import TLSCInspector
 from inspector.inspectors.contract.contract import ContractInspector
@@ -56,7 +56,7 @@ def _inspect_many_blocks(
 
 def _inspect_many_contracts(
         index: int,
-        contract_addresses: List[str],
+        contract_addresses: List[Tuple[int, str]],
         rpc: str,
         max_concurrency: int = 1,
         request_timeout: int = 500,

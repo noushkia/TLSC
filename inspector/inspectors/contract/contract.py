@@ -19,7 +19,7 @@ formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
 
 
 class ContractInspector(Inspector):
-    async def inspect_many(self, inspect_db_session: orm.Session, task_batch: Tuple[int, int] | List[str],
+    async def inspect_many(self, inspect_db_session: orm.Session, task_batch: Tuple[int, int] | List[Tuple[int, str]],
                            batch_size: int = 50):
         contract_addresses = task_batch
 

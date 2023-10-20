@@ -8,7 +8,6 @@ from inspector.controller import run_inspectors
 import pandas as pd
 import numpy as np
 
-
 config = configparser.ConfigParser()
 config.read('config.ini')
 
@@ -57,5 +56,6 @@ if __name__ == "__main__":
         run_inspectors(block_batches, rpc_urls, inspector_cnt)
     elif args.many_contracts is not None:  # inspect all contracts
         contract_batches = np.array_split(pd.read_csv(args.many_contracts), inspector_cnt)
-        contract_batches = [contract_batch["contract_address"].tolist() for contract_batch in contract_batches]
+        contract_batches = [list(zip(contract_batch['index'], contract_batch['contract_address'])) for contract_batch in
+                            contract_batches]
         run_inspectors(contract_batches, rpc_urls, inspector_cnt, inspect_contracts=True)

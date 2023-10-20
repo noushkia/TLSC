@@ -54,7 +54,7 @@ async def inspect_many_blocks(
 
         for tx_hash in block_transactions:
             tx = await web3.eth.get_transaction(tx_hash)
-
+            # else, check if it's from an already known contract
             if tx['to'] is None:
                 receipt = await web3.eth.get_transaction_receipt(tx_hash)
                 contract_address = receipt['contractAddress']
