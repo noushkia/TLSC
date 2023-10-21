@@ -1,9 +1,10 @@
 import configparser
 import argparse
+from enum import Enum
 from multiprocessing import cpu_count
 from pathlib import Path
 
-from inspector.controller import run_inspectors
+from inspector.controller import run_inspectors, InspectorType
 
 import pandas as pd
 import numpy as np
@@ -36,8 +37,13 @@ if __name__ == "__main__":
     parser.add_argument('-b', '--before', type=int, help='Block number to end with', default=1)
     parser.add_argument('-p', '--para', type=int, help='Maximum number of parallel processes/inspectors',
                         default=cpu_count())
+
     parser.add_argument('-mc', '--many-contracts', type=str,
                         help='Path to csv file containing contract addresses to inspect', default=None)
+
+    # flag for inspecting blocks instead of tlscs
+    parser.add_argument('-mb', '--many-blocks', action='store_true', help='Inspect many blocks in given range',
+                        default=None)
     args = parser.parse_args()
 
     if args.after >= args.before:
@@ -51,11 +57,14 @@ if __name__ == "__main__":
     rpc_urls = get_rpc_endpoints(rpc_hosts_ip_path)
 
     if args.after != 0:
-        # inspect blocks
-        block_batches = np.linspace(start=args.after, stop=args.before, num=inspector_cnt + 1)
-        run_inspectors(block_batches, rpc_urls, inspector_cnt)
-    elif args.many_contracts is not None:  # inspect all contracts
+        task_batches = np.linspace(start=args.after, stop=args.before, num=inspector_cnt + 1)
+        inspector_type = InspectorType.BLOCK if args.many_blocks is True else InspectorType.TLSC
+    elif args.many_contracts is not None:
         contract_batches = np.array_split(pd.read_csv(args.many_contracts), inspector_cnt)
-        contract_batches = [list(zip(contract_batch['index'], contract_batch['contract_address'])) for contract_batch in
-                            contract_batches]
-        run_inspectors(contract_batches, rpc_urls, inspector_cnt, inspect_contracts=True)
+        task_batches = [list(zip(contract_batch['index'], contract_batch['contract_address'])) for contract_batch in
+                        contract_batches]
+        inspector_type = InspectorType.CONTRACT
+    else:
+        raise ValueError("Invalid arguments")
+
+    run_inspectors(task_batches, rpc_urls, inspector_cnt, inspector_type=inspector_type)

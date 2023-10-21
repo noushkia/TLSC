@@ -33,7 +33,7 @@ async def _fetch_block_info(w3: Web3, block_number: int) -> Tuple[str, int, int,
     :param block_number: Block number to fetch
     :return: Tuple of miner address, gas used, gas limit, transactions
     """
-    block_info = await w3.eth.get_block(block_number)
+    block_info = await w3.eth.get_block(block_number, full_transactions=True)
     return block_info['miner'], block_info['gasUsed'], block_info['gasLimit'], block_info['transactions']
 
 
@@ -139,6 +139,8 @@ async def inspect_many_blocks(
         })
 
         i += 1
+
+    # todo: verify miner address, coinbase transfer, gas used ratio, gas fee, and base fee per gas
 
     if all_blocks:
         logger.debug("Writing to DB")
