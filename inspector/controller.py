@@ -8,7 +8,7 @@ from typing import List, Tuple
 
 from inspector.inspectors.tlsc.tlsc import TLSCInspector
 from inspector.inspectors.contract.contract import ContractInspector
-from inspector.utils import get_log_handler
+from inspector.utils import get_log_handler, clean_up_log_handlers
 from utils.db import get_inspect_session, create_tables
 
 config = configparser.ConfigParser()
@@ -80,7 +80,8 @@ def _inspect_many_contracts(
 
 
 def run_inspectors(task_batches, rpc_urls, inspector_cnt, inspect_contracts=False):
-    logger.addHandler(get_log_handler(logs_path, formatter, rotate=False))
+    log_file_handler = get_log_handler(logs_path, formatter, rotate=False)
+    logger.addHandler(log_file_handler)
 
     if inspector_cnt > len(rpc_urls):
         logger.warning(f"Number of inspectors ({inspector_cnt}) exceeds number of RPC URLs ({len(rpc_urls)}).")
@@ -120,3 +121,7 @@ def run_inspectors(task_batches, rpc_urls, inspector_cnt, inspect_contracts=Fals
                 process.get()
             except Exception as e:
                 logger.error(f"Process exited due to {type(e)}:\n{traceback.format_exc()}")
+
+    logger.info("All inspectors finished")
+
+    clean_up_log_handlers(logger)

@@ -9,7 +9,7 @@ from web3 import Web3
 from analyzer.time_lock_detector import bytecode_has_potential_time_lock
 from inspector.models.contract.crud import write_contracts
 from inspector.models.contract.model import Contract
-from inspector.utils import get_log_handler
+from inspector.utils import get_log_handler, clean_up_log_handlers
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -42,7 +42,8 @@ async def inspect_many_blocks(
         inspect_db_session: orm.Session,
 ):
     logs_path = Path(config['logs']['logs_path']) / config['logs']['inspectors_log_path'] / f"inspector_{host}.log"
-    logger.addHandler(get_log_handler(logs_path, formatter, rotate=True))
+    log_file_handler = get_log_handler(logs_path, formatter, rotate=True)
+    logger.addHandler(log_file_handler)
 
     all_tlscs: List[Contract] = []
 
@@ -81,3 +82,5 @@ async def inspect_many_blocks(
     logger.debug("Writing to DB")
     write_contracts(all_tlscs, inspect_db_session)
     logger.debug("Writing done")
+
+    clean_up_log_handlers(logger)

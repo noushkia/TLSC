@@ -13,3 +13,10 @@ def get_log_handler(log_path: Path, formatter: logging.Formatter, rotate: bool =
     file_handler.setFormatter(formatter)
 
     return file_handler
+
+
+def clean_up_log_handlers(logger: logging.Logger):
+    """Clean up log handlers."""
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
+        handler.close()

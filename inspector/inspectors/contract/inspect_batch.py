@@ -8,7 +8,7 @@ from web3 import Web3, exceptions
 
 from inspector.models.contract_info.crud import write_contracts_info
 from inspector.models.contract_info.model import ContractInfo
-from inspector.utils import get_log_handler
+from inspector.utils import get_log_handler, clean_up_log_handlers
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -66,7 +66,8 @@ async def inspect_many_contracts(
         inspect_db_session: orm.Session,
 ):
     logs_path = Path(config['logs']['logs_path']) / config['logs']['inspectors_log_path'] / f"inspector_{host}.log"
-    logger.addHandler(get_log_handler(logs_path, formatter, rotate=True))
+    log_file_handler = get_log_handler(logs_path, formatter, rotate=True)
+    logger.addHandler(log_file_handler)
 
     # largest tx hash, largest tx value, largest tx block number, contract ETH balance
     all_info: List[ContractInfo] = []
@@ -114,3 +115,5 @@ async def inspect_many_contracts(
     logger.debug("Writing to DB")
     write_contracts_info(all_info, inspect_db_session)
     logger.debug("Writing done")
+
+    clean_up_log_handlers(logger)
