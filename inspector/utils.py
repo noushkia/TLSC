@@ -18,5 +18,7 @@ def get_log_handler(log_path: Path, formatter: logging.Formatter, rotate: bool =
 def clean_up_log_handlers(logger: logging.Logger):
     """Clean up log handlers."""
     for handler in logger.handlers:
+        if handler.__class__.__name__ == 'StreamHandler':
+            continue
         logger.removeHandler(handler)
         handler.close()
