@@ -43,7 +43,7 @@ def create_tables():
     Base.metadata.create_all(engine)
 
 # remove duplicate contracts:
-# DELETE FROM tlsc
+# DELETE FROM contracts
 # WHERE contract_address NOT IN (
 #     SELECT MIN(contract_address)
 #     FROM contracts

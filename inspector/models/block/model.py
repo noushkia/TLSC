@@ -13,6 +13,8 @@ class Block(Base):
     base_fee_per_gas: Mapped[float] = mapped_column(Numeric, nullable=False)
     gas_fee: Mapped[float] = mapped_column(Numeric, nullable=False)
     gas_used: Mapped[float] = mapped_column(Numeric, nullable=False)
+    gas_limit: Mapped[float] = mapped_column(Numeric, nullable=False)
+    gas_used_ratio: Mapped[float] = mapped_column(Numeric, nullable=False)
 
     # todo: add MEV (all payments to the miner)
 
@@ -22,4 +24,6 @@ class Block(Base):
                f"coinbase_transfer='{self.coinbase_transfer}', " \
                f"base_fee_per_gas='{self.base_fee_per_gas}', " \
                f"gas_fee='{self.gas_fee}', " \
-               f"gas_used='{self.gas_used}')>"
+               f"gas_used='{self.gas_used}')>" \
+               f"gas_limit='{self.gas_limit}')>" \
+               f"gas_used_ratio='{self.gas_used_ratio}')>"
