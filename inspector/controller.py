@@ -39,77 +39,46 @@ class InspectorType(Enum):
     TLSC = "tlsc"
 
 
-def _inspect_many_tlscs(
+def inspect_many(
         index: int,
-        after_block: int,
-        before_block: int,
+        task_batch,
+        inspector_type: InspectorType,
         rpc: str,
         max_concurrency: int = 1,
         request_timeout: int = 500,
 ):
-    logger.info(f"Starting up inspector {rpc} for blocks {after_block} to {before_block}")
     inspect_db_session = get_inspect_session()
 
-    inspector = TLSCInspector(
-        rpc,
-        max_concurrency=max_concurrency,
-        request_timeout=request_timeout,
-    )
+    if inspector_type == InspectorType.BLOCK:
+        inspector = BlockInspector(
+            rpc,
+            max_concurrency=max_concurrency,
+            request_timeout=request_timeout,
+        )
+        args = (task_batch[0], task_batch[1])
+        logger.info(f"Starting up block inspector {rpc} for blocks {task_batch[0]} to {task_batch[1]}")
+    elif inspector_type == InspectorType.CONTRACT:
+        inspector = ContractInspector(
+            rpc,
+            max_concurrency=max_concurrency,
+            request_timeout=request_timeout,
+        )
+        args = task_batch
+        logger.info(f"Starting up contract inspector {rpc} for {len(task_batch)} contracts")
+    elif inspector_type == InspectorType.TLSC:
+        inspector = TLSCInspector(
+            rpc,
+            max_concurrency=max_concurrency,
+            request_timeout=request_timeout,
+        )
+        args = (task_batch[0], task_batch[1])
+        logger.info(f"Starting up tlsc inspector {rpc} for blocks {task_batch[0]} to {task_batch[1]}")
+    else:
+        raise ValueError(f"Invalid inspector type {inspector_type}")
 
     try:
         asyncio.run(inspector.inspect_many(
-            task_batch=(after_block, before_block),
-            inspect_db_session=inspect_db_session,
-        ), debug=False)
-    except Exception as e:
-        logger.error(f"Process {index} exited due to {type(e)}:\n{traceback.format_exc()}")
-
-
-def _inspect_many_contracts(
-        index: int,
-        contract_addresses: List[Tuple[int, str]],
-        rpc: str,
-        max_concurrency: int = 1,
-        request_timeout: int = 500,
-):
-    logger.info(f"Starting up inspector {rpc} for {len(contract_addresses)} contracts")
-    inspect_db_session = get_inspect_session()
-
-    inspector = ContractInspector(
-        rpc,
-        max_concurrency=max_concurrency,
-        request_timeout=request_timeout,
-    )
-
-    try:
-        asyncio.run(inspector.inspect_many(
-            task_batch=contract_addresses,
-            inspect_db_session=inspect_db_session,
-        ), debug=False)
-    except Exception as e:
-        logger.error(f"Process {index} exited due to {type(e)}:\n{traceback.format_exc()}")
-
-
-def _inspect_many_blocks(
-        index: int,
-        after_block: int,
-        before_block: int,
-        rpc: str,
-        max_concurrency: int = 1,
-        request_timeout: int = 500,
-):
-    logger.info(f"Starting up block inspector {rpc} for blocks {after_block} to {before_block}")
-    inspect_db_session = get_inspect_session()
-
-    inspector = BlockInspector(
-        rpc,
-        max_concurrency=max_concurrency,
-        request_timeout=request_timeout,
-    )
-
-    try:
-        asyncio.run(inspector.inspect_many(
-            task_batch=(after_block, before_block),
+            task_batch=args,
             inspect_db_session=inspect_db_session,
         ), debug=False)
     except Exception as e:
@@ -144,8 +113,7 @@ def run_inspectors(
         rpc_inputs = [
             (
                 i,  # inspectors index
-                int(task_batches[i]),  # after_block
-                int(task_batches[i + 1]),  # before_block
+                (int(task_batches[i]), int(task_batches[i + 1])),  # (after_block, before_block)
                 f"http://{rpc_urls.ip[i % len(rpc_urls)]}:8545/"  # rpc
                 # 4,                                # max_concurrency
             )
@@ -155,12 +123,9 @@ def run_inspectors(
         raise ValueError(f"Invalid inspector type {inspector_type}")
 
     with Pool(processes=inspector_cnt) as pool:
-        if inspector_type == InspectorType.CONTRACT:
-            processes = [pool.apply_async(_inspect_many_contracts, args=_input) for _input in rpc_inputs]
-        elif inspector_type == InspectorType.TLSC:
-            processes = [pool.apply_async(_inspect_many_tlscs, args=_input) for _input in rpc_inputs]
-        elif inspector_type == InspectorType.BLOCK:
-            processes = [pool.apply_async(_inspect_many_blocks, args=_input) for _input in rpc_inputs]
+        processes = [pool.apply_async(inspect_many, args=(_input[0], _input[1], inspector_type, _input[2])) for _input
+                     in rpc_inputs]
+
         for process in processes:
             try:
                 process.get()
