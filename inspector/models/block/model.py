@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Numeric
+from sqlalchemy import Integer, String, Numeric
+from sqlalchemy.orm import Mapped, mapped_column
 
 from inspector.models.base import Base
 
@@ -6,10 +7,19 @@ from inspector.models.base import Base
 class Block(Base):
     __tablename__ = 'blocks'
 
-    block_number = Column(Integer, primary_key=True)  # the block number
-    miner_address = Column(String, nullable=False)  # the block miner/validator address
-    coinbase_transfer = Column(Numeric, nullable=False)  # the coinbase transfer, i.e., block reward
-    base_fee_per_gas = Column(Numeric, nullable=False)  # the base fee per gas for the block
-    gas_fee = Column(Numeric, nullable=False)  # Total gas fee in the block
-    gas_used = Column(Numeric, nullable=False)  # Total gas used in the block
+    block_number: Mapped[int] = mapped_column(Integer, primary_key=True, default=0)
+    miner_address: Mapped[str] = mapped_column(String(100), nullable=False)
+    coinbase_transfer: Mapped[float] = mapped_column(Numeric, nullable=False)
+    base_fee_per_gas: Mapped[float] = mapped_column(Numeric, nullable=False)
+    gas_fee: Mapped[float] = mapped_column(Numeric, nullable=False)
+    gas_used: Mapped[float] = mapped_column(Numeric, nullable=False)
+
     # todo: add MEV (all payments to the miner)
+
+    def __repr__(self):
+        return f"<Block(block_number='{self.block_number}', " \
+               f"miner_address='{self.miner_address}', " \
+               f"coinbase_transfer='{self.coinbase_transfer}', " \
+               f"base_fee_per_gas='{self.base_fee_per_gas}', " \
+               f"gas_fee='{self.gas_fee}', " \
+               f"gas_used='{self.gas_used}')>"

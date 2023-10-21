@@ -1,14 +1,14 @@
 import configparser
 import logging
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 
 from sqlalchemy import orm
 from web3 import Web3
 
 from analyzer.time_lock_detector import bytecode_has_potential_time_lock
-from inspector.models.contract.crud import write_contracts
 from inspector.models.contract.model import Contract
+from inspector.models.crud import insert_data
 from inspector.utils import get_log_handler, clean_up_log_handlers
 
 config = configparser.ConfigParser()
@@ -45,7 +45,7 @@ async def inspect_many_blocks(
     log_file_handler = get_log_handler(logs_path, formatter, rotate=True)
     logger.addHandler(log_file_handler)
 
-    all_tlscs: List[Contract] = []
+    all_tlscs: List[Dict] = []
 
     logger.info(f"Inspecting blocks {after_block_number} to {before_block_number}")
     for block_number in range(after_block_number, before_block_number):
@@ -71,16 +71,17 @@ async def inspect_many_blocks(
 
                 logger.debug(f"Block: {block_number} -- Contract: {contract_address} -- Append tlscs")
 
-                all_tlscs.append(Contract(
-                    contract_address=contract_address,
-                    bytecode=bytecode,
-                    from_address=tx['from'],
-                    tx_hash=tx['hash'],
-                    block_number=block_number
-                ))
+                all_tlscs.append({
+                    "contract_address": contract_address,
+                    "bytecode": bytecode,
+                    "from_address": tx['from'],
+                    "tx_hash": tx['hash'].hex(),
+                    "block_number": block_number,
+                })
 
-    logger.debug("Writing to DB")
-    write_contracts(all_tlscs, inspect_db_session)
-    logger.debug("Writing done")
+    if all_tlscs:
+        logger.debug("Writing to DB")
+        insert_data(Contract, all_tlscs, inspect_db_session)
+        logger.debug("Writing done")
 
     clean_up_log_handlers(logger)
