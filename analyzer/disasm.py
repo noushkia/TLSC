@@ -35,11 +35,12 @@ class EvmInstruction:
 lru_cache(maxsize=2 ** 10)
 
 
-def disassemble(bytecode: str) -> List[EvmInstruction]:
-    """Disassembles evm bytecode and returns a list of instructions.
+def disassemble_for_time_lock(bytecode: str) -> List[EvmInstruction] | None:
+    """Disassembles evm bytecode and returns a list of instructions if there is no time lock condition.
+    Returns None if there is a time lock condition.
 
     :param bytecode: The bytecode to disassemble
-    :return: A list of EvmInstruction objects
+    :return: A list of EvmInstruction objects or None
     """
     instruction_list = []
     address = 0
@@ -63,12 +64,15 @@ def disassemble(bytecode: str) -> List[EvmInstruction]:
             address += 1
             continue
 
+        if opcode in ["NUMBER", "TIMESTAMP"]:
+            return None
+
         current_instruction = EvmInstruction(address, opcode)
 
         match = re.search(regex_PUSH, opcode)
         if match:
             argument_bytes = bytecode[address + 1: address + 1 + int(match.group(1))]
-            if type(argument_bytes) == bytes:
+            if type(argument_bytes) is bytes:
                 current_instruction.argument = "0x" + argument_bytes.hex()
             else:
                 current_instruction.argument = argument_bytes

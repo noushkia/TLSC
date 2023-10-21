@@ -6,7 +6,7 @@ from typing import List
 from sqlalchemy import orm
 from web3 import Web3
 
-from analyzer.time_lock_detector import bytecode_has_time_lock
+from analyzer.time_lock_detector import bytecode_has_potential_time_lock
 from inspector.models.contract.crud import write_contracts
 from inspector.models.contract.model import Contract
 from inspector.utils import get_log_handler
@@ -65,8 +65,7 @@ async def inspect_many_blocks(
 
                 logger.debug(f"Block: {block_number} -- Contract: {contract_address} -- Check TL")
 
-                # todo: optimize this (look for potential time lock in bytecode no need to decode all of it)
-                if not bytecode_has_time_lock(bytecode):
+                if not bytecode_has_potential_time_lock(bytecode):
                     continue
 
                 logger.debug(f"Block: {block_number} -- Contract: {contract_address} -- Append tlscs")
