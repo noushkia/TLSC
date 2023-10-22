@@ -38,10 +38,12 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--para', type=int, help='Maximum number of parallel processes/inspectors',
                         default=cpu_count())
 
-    parser.add_argument('-mc', '--many-contracts', type=str,
+    parser.add_argument('-mc', '--many-contracts', action='store_true',
+                        help='Inspect collected contracts in given range', default=None)
+
+    parser.add_argument('-cf', '--contracts-file', type=str,
                         help='Path to csv file containing contract addresses to inspect', default=None)
 
-    # flag for inspecting blocks instead of tlscs
     parser.add_argument('-mb', '--many-blocks', action='store_true', help='Inspect many blocks in given range',
                         default=None)
     args = parser.parse_args()
@@ -58,12 +60,11 @@ if __name__ == "__main__":
 
     if args.after != 0:
         task_batches = np.linspace(start=args.after, stop=args.before, num=inspector_cnt + 1)
-        inspector_type = InspectorType.BLOCK if args.many_blocks is True else InspectorType.TLSC
-    elif args.many_contracts is not None:
-        contract_batches = np.array_split(pd.read_csv(args.many_contracts), inspector_cnt)
-        task_batches = [list(zip(contract_batch['index'], contract_batch['contract_address'])) for contract_batch in
-                        contract_batches]
-        inspector_type = InspectorType.CONTRACT
+        inspector_type = InspectorType.TLSC
+        if args.many_contracts is True:
+            inspector_type = InspectorType.CONTRACT
+        elif args.many_blocks is True:
+            inspector_type = InspectorType.BLOCK
     else:
         raise ValueError("Invalid arguments")
 
