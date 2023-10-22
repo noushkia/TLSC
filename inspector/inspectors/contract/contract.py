@@ -29,7 +29,7 @@ class ContractInspector(Inspector):
 
         tasks = []
         sem = asyncio.Semaphore(self.max_concurrency)
-        # inspect each batch of contracts
+
         for i in range(0, len(contract_addresses), batch_size):
             tasks.append(
                 asyncio.ensure_future(

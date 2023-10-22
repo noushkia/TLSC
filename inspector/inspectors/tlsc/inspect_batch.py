@@ -40,7 +40,18 @@ async def inspect_many_blocks(
         before_block_number: int,
         host: str,
         inspect_db_session: orm.Session,
-):
+) -> None:
+    """
+    Inspects blocks for time lock smart contracts.
+    Fetches the contract code from their initial transaction and checks if it has a potential time lock.
+
+    :param web3: Web3 provider
+    :param after_block_number: Block number to start from
+    :param before_block_number: Block number to end with
+    :param host: RPC endpoint url
+    :param inspect_db_session: DB session
+    :return: None
+    """
     logs_path = Path(config['logs']['logs_path']) / config['logs']['inspectors_log_path'] / f"inspector_{host}.log"
     log_file_handler = get_log_handler(logs_path, formatter, rotate=True)
     logger.addHandler(log_file_handler)

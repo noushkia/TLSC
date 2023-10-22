@@ -62,17 +62,17 @@ async def inspect_many_blocks(
         before_block_number: int,
         host: str,
         inspect_db_session: orm.Session,
-):
+) -> None:
     """
     Inspects many blocks and writes them to DB.
     Fetches the miner revenue from block rewards and fees. (todo: MEV)
     Also fetched the transactions that are for time-locked contracts. (todo: ERC20 tokens)
-    :param web3:
-    :param after_block_number:
-    :param before_block_number:
-    :param host:
-    :param inspect_db_session:
-    :return:
+    :param web3: Web3 provider
+    :param after_block_number: Block number to start from
+    :param before_block_number: Block number to end with
+    :param host: RPC endpoint url
+    :param inspect_db_session: DB session
+    :return: None
     """
     logs_path = Path(config['logs']['logs_path']) / config['logs']['inspectors_log_path'] / f"inspector_{host}.log"
     log_file_handler = get_log_handler(logs_path, formatter, rotate=True)

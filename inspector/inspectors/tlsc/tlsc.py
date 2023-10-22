@@ -28,6 +28,7 @@ def _get_last_inspected_block(session: Session, after_block: int, before_block: 
     :param after_block: The block to start inspecting from
     :param before_block: The block to stop inspecting at
     :return: The last block that was inspected
+    todo: update for SQLAlchemy 2.0
     """
     latest_block = session.query(Contract.block_number) \
         .filter(Contract.block_number < before_block) \
