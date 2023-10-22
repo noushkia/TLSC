@@ -1,7 +1,7 @@
 import configparser
 import logging
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 from sqlalchemy import orm
 from web3 import Web3
@@ -30,8 +30,11 @@ async def _fetch_block_transactions(w3, block_number: int) -> List:
     return block_json["transactions"]
 
 
-async def _fetch_contract_code(w3, contract_address: str, block_number: int) -> str:
-    return await w3.eth.get_code(account=contract_address, block_identifier=block_number)
+async def _fetch_contract(w3, tx_hash: str, block_number: int) -> Tuple[str, str]:
+    receipt = await w3.eth.get_transaction_receipt(tx_hash)
+    contract_address = receipt['contractAddress']
+    bytecode = await w3.eth.get_code(account=contract_address, block_identifier=block_number)
+    return contract_address, bytecode.hex()
 
 
 async def inspect_many_blocks(
@@ -67,10 +70,7 @@ async def inspect_many_blocks(
         for tx in block_transactions:
             # else, check if it's from an already known contract
             if tx['to'] is None:
-                receipt = await web3.eth.get_transaction_receipt(tx['hash'])
-                contract_address = receipt['contractAddress']
-                bytecode = await _fetch_contract_code(web3, contract_address, block_number)
-                bytecode = bytecode.hex()
+                contract_address, bytecode = await _fetch_contract(web3, tx['hash'], block_number)
                 # Ignore empty bytecodes
                 if bytecode == "0x":
                     continue
