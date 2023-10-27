@@ -14,9 +14,6 @@ class Block(Base):
     gas_fee: Mapped[float] = mapped_column(Numeric, nullable=False)
     gas_used: Mapped[float] = mapped_column(Numeric, nullable=False)
     gas_limit: Mapped[float] = mapped_column(Numeric, nullable=False)
-    gas_used_ratio: Mapped[float] = mapped_column(Numeric, nullable=False)
-
-    # todo: add MEV (all payments to the miner)
 
     def __repr__(self):
         return f"<Block(block_number='{self.block_number}', " \
@@ -25,5 +22,4 @@ class Block(Base):
                f"base_fee_per_gas='{self.base_fee_per_gas}', " \
                f"gas_fee='{self.gas_fee}', " \
                f"gas_used='{self.gas_used}')>" \
-               f"gas_limit='{self.gas_limit}')>" \
-               f"gas_used_ratio='{self.gas_used_ratio}')>"
+               f"gas_limit='{self.gas_limit}')>"

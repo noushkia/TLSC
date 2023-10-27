@@ -9,6 +9,7 @@ from web3 import Web3
 from inspector.models.contract_info.model import ContractInfo
 from inspector.models.crud import insert_data
 from inspector.utils import get_log_handler, clean_up_log_handlers
+from code_analyzer.time_lock.time_lock_detector import bytecode_has_time_lock
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -54,11 +55,6 @@ async def inspect_many_contracts(
     logger.info(f"{host}: Inspecting contracts {contracts[0][0]} to {contracts[-1][0]}")
     for index, contract_address in contracts:
         logger.debug(f"Contract: {contract_address} -- Getting contract data")
-
-        latest_tx_cnt = await _fetch_contract_tx_count(web3, contract_address)
-
-        if latest_tx_cnt == 0:
-            continue
 
         contract_balance = await _fetch_contract_eth_balance(web3, contract_address)
 

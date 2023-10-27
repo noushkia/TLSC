@@ -41,9 +41,6 @@ if __name__ == "__main__":
     parser.add_argument('-mc', '--many-contracts', action='store_true',
                         help='Inspect collected contracts in given range', default=None)
 
-    parser.add_argument('-cf', '--contracts-file', type=str,
-                        help='Path to csv file containing contract addresses to inspect', default=None)
-
     parser.add_argument('-mb', '--many-blocks', action='store_true', help='Inspect many blocks in given range',
                         default=None)
     args = parser.parse_args()
