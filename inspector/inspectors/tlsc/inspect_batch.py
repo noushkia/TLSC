@@ -6,7 +6,7 @@ from typing import List, Dict, Tuple
 from sqlalchemy import orm
 from web3 import Web3
 
-from analyzer.time_lock_detector import bytecode_has_potential_time_lock
+from code_analyzer.time_lock.time_lock_detector import bytecode_has_potential_time_lock
 from inspector.models.contract.model import Contract
 from inspector.models.crud import insert_data
 from inspector.utils import get_log_handler, clean_up_log_handlers
@@ -69,7 +69,7 @@ async def inspect_many_blocks(
 
         for tx in block_transactions:
             # else, check if it's from an already known contract
-            if tx['to'] is None:
+            if tx['to'] is None:  # todo: check that are not in the db (Made a mistake and removed duplicates)
                 contract_address, bytecode = await _fetch_contract(web3, tx['hash'], block_number)
                 # Ignore empty bytecodes
                 if bytecode == "0x":

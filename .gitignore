@@ -166,3 +166,6 @@ cython_debug/
 # Verified Analysis
 verified-smart-contracts
 verified_scs.ipynb
+
+# Disassembler
+code_analyzer/*.txt
