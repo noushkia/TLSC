@@ -24,8 +24,10 @@ console_handler.setFormatter(formatter)
 
 logger.addHandler(console_handler)
 
+ETH_TO_WEI = 1e18
 
-async def _fetch_block_info(w3: Web3, block_number: int) -> Tuple[str, int, int, List[Dict[str, str]]]:
+
+async def _fetch_block_info(w3: Web3, block_number: int) -> Tuple[str, int, int, List]:
     """
     Fetches block info from web3.
 
@@ -33,27 +35,22 @@ async def _fetch_block_info(w3: Web3, block_number: int) -> Tuple[str, int, int,
     :param block_number: Block number to fetch
     :return: Tuple of miner address, gas used, gas limit, transactions
     """
+    # need to fetch gasUsed for each transaction, which is not in this response
     block_info = await w3.eth.get_block(block_number, full_transactions=True)
     return block_info['miner'], block_info['gasUsed'], block_info['gasLimit'], block_info['transactions']
 
 
 # https://web3py.readthedocs.io/en/stable/web3.eth.html#web3.eth.Eth.fee_history
-async def _fetch_base_fees_per_gas(w3: Web3, block_count: int, newest_block_number: int) -> Tuple[
-    List[int], List[float], List[int]]:
+async def _fetch_base_fees_per_gas(
+        w3: Web3,
+        block_count: int,
+        newest_block_number: int
+) -> List[int]:
     base_fees = await w3.eth.fee_history(block_count, newest_block_number, [2, 98])
     base_fees_per_gas = base_fees["baseFeePerGas"]
-    gas_used_ratio = base_fees["gasUsedRatio"]
-    reward = base_fees["reward"]
     if len(base_fees_per_gas) == 0:
         raise RuntimeError("Unexpected error - no fees returned")
-
-    return base_fees_per_gas, gas_used_ratio, reward
-
-
-async def _fetch_coinbase_transfer(w3: Web3, block_number: int) -> int:
-    # todo: get all miner payments
-    #  https://github.com/flashbots/mev-inspect-py/blob/main/mev_inspect/miner_payments.py#L10
-    pass
+    return base_fees_per_gas
 
 
 async def inspect_many_blocks(
@@ -82,49 +79,57 @@ async def inspect_many_blocks(
     all_updated_info: List[Dict] = []
 
     # get the addresses of all contracts and convert them to map of address to value
+    # TODO: must update DB with new largest tx values.
+    #  This is not local!
     smart_contracts = inspect_db_session.execute(
         select(ContractInfo.contract_address, ContractInfo.largest_tx_value)).all()
     smart_contracts = {contract_address: largest_tx_value for contract_address, largest_tx_value in smart_contracts}
 
     logger.info(f"Inspecting blocks {after_block_number} to {before_block_number}")
-    # todo: check gas used ratio and reward
-    base_fees_per_gas, gas_used_ratio, reward = await _fetch_base_fees_per_gas(web3,
-                                                                               before_block_number - after_block_number,
-                                                                               before_block_number)
+
+    base_fees_per_gas = await _fetch_base_fees_per_gas(web3,
+                                                       before_block_number - after_block_number,
+                                                       before_block_number - 1)
 
     i = 0
     for block_number in range(after_block_number, before_block_number):
         logger.debug(f"Block: {block_number} -- Getting block data")
-
         miner_address, total_gas_used, block_gas_limit, block_transactions = await _fetch_block_info(web3, block_number)
         coinbase_transfer = 0
-        total_gas_fee = 0
+        transaction_fees = 0
+        burnt_fees = 0
+        block_gas_used = 0
 
         for tx in block_transactions:
-            total_gas_fee += (float(tx['gasPrice']) - base_fees_per_gas[i]) * float(tx['gas'])
-            to_address = tx['to']
-            from_address = tx['from']
-            transaction_value = float(tx['value'])
-            contract_address = None
+            # todo: use Etherscan API to faster fetch required data
+            #  https://docs.etherscan.io/api-endpoints/blocks#get-block-and-uncle-rewards-by-blockno
+            print(tx['hash'])
+            tx_receipt = await web3.eth.get_transaction_receipt(tx['hash'])
+            tx_gas_used = float(tx_receipt['gasUsed'])
+            transaction_fees += (float(tx_receipt['effectiveGasPrice']) / ETH_TO_WEI) * tx_gas_used
+            burnt_fees += (base_fees_per_gas[i] / ETH_TO_WEI) * tx_gas_used
+            block_gas_used += tx_gas_used
+            to_address = tx_receipt['to']
+            from_address = tx_receipt['from']
+            transaction_value = float(tx['value']) / ETH_TO_WEI
 
             # check if it's from or to an already known contract
+            contract_address = None
             if smart_contracts.get(to_address) is not None:
                 contract_address = to_address
             elif smart_contracts.get(from_address) is not None:
                 contract_address = from_address
 
-            if contract_address is not None:
-                if smart_contracts[contract_address] < transaction_value:
-                    all_updated_info.append({
-                        "contract_address": contract_address,
-                        "largest_tx_hash": tx['hash'].hex(),
-                        "largest_tx_block_number": block_number,
-                        "largest_tx_value": transaction_value,
-                    })
-                    smart_contracts[contract_address] = transaction_value
+            if contract_address is not None and smart_contracts[contract_address] < transaction_value:
+                all_updated_info.append({
+                    "contract_address": contract_address,
+                    "largest_tx_hash": tx['hash'].hex(),
+                    "largest_tx_block_number": block_number,
+                    "largest_tx_value": transaction_value,
+                })
+                smart_contracts[contract_address] = transaction_value
 
-            # coinbase transfer
-            if to_address == miner_address:
+            if tx_receipt['to'] == miner_address:
                 coinbase_transfer += transaction_value
 
         all_blocks.append({
@@ -132,15 +137,12 @@ async def inspect_many_blocks(
             "miner_address": miner_address,
             "coinbase_transfer": coinbase_transfer,
             "base_fee_per_gas": base_fees_per_gas[i],
-            "gas_fee": total_gas_fee,
+            "gas_fee": transaction_fees - burnt_fees,  # priority_fee = gas_fee - base_fee (EIP-1559)
             "gas_used": total_gas_used,
             "gas_limit": block_gas_limit,
-            "gas_used_ratio": gas_used_ratio[i],
         })
 
         i += 1
-
-    # todo: verify miner address, coinbase transfer, gas used ratio, gas fee, and base fee per gas
 
     if all_blocks:
         logger.debug("Writing to DB")
