@@ -41,6 +41,16 @@ def _get_last_inspected_block(session: Session, after_block: int, before_block: 
 
 
 class BlockInspector(Inspector):
+    def __init__(
+            self,
+            rpc_endpoint: str,
+            max_concurrency: int = 1,
+            request_timeout: int = 300,
+            etherscan_api_key: str = ""
+    ):
+        super().__init__(rpc_endpoint, max_concurrency, request_timeout)
+        self.etherscan_api_key = etherscan_api_key
+
     async def inspect_many(
             self,
             inspect_db_session: orm.Session,
@@ -82,10 +92,14 @@ class BlockInspector(Inspector):
     ):
         after_block_number, before_block_number = task_batch
         async with semaphore:
+            # https://docs.etherscan.io/api-endpoints/blocks#get-block-and-uncle-rewards-by-blockno
+            etherscan_block_reward_url = (f"https://api.etherscan.io/api?module=block&action=getblockreward&blockno={{"
+                                          f"}}&apikey={self.etherscan_api_key}")
             await self.batch_queue.put(await inspect_many_blocks(
                 self.w3,
                 after_block_number,
                 before_block_number,
                 host=self.host,
                 inspect_db_session=inspect_db_session,
+                etherscan_block_reward_url=etherscan_block_reward_url
             ))

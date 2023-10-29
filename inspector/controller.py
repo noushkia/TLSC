@@ -32,6 +32,18 @@ console_handler.setFormatter(formatter)
 
 logger.addHandler(console_handler)
 
+ETHERSCAN_API_KEYS = [
+    "W371NBK6V9SAB8ETM3VFEIM93AJUQDZJGI",
+    "I3T9RMRZVVQQ3U93VWKD46Q6IJ6YMYC8KY",
+    "T48DJNQHTTC6TGKR4ZW19ZSBR9XH17R5S3",
+    "83BARI76JCM3WT4MTPQA2FEBCMA5IGI8PI",
+    "PUR8QWEWKF6IQVH64SA4FSP1Y492N3TEEC",
+    "59VJZWW7UY6TXDNCDRYJ3X6RAKKD8IMR5D",
+    "NV1VNKU47AUBGK9CRMK6A1P1E4PDCUH2ZZ",
+    "BC8H4KH7AKSXTWWFVYK4HSYM8JFHIXYNCS",
+    "DQEFKSEBAS5H86I5K77ZXN81GJXFSDTSCG",
+]
+
 
 class InspectorType(Enum):
     BLOCK = "block"
@@ -55,6 +67,7 @@ def inspect_many(
             rpc,
             max_concurrency=max_concurrency,
             request_timeout=request_timeout,
+            etherscan_api_key=ETHERSCAN_API_KEYS[index % len(ETHERSCAN_API_KEYS)],
         )
         logger.info(f"Starting up block inspector {rpc} for blocks {task_batch[0]} to {task_batch[1]}")
     elif inspector_type == InspectorType.CONTRACT:
