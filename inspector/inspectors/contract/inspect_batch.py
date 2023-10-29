@@ -1,3 +1,4 @@
+from logging import Logger
 from typing import List, Dict
 
 from sqlalchemy import orm
@@ -5,7 +6,6 @@ from web3 import Web3
 
 from inspector.models.contract_info.model import ContractInfo
 from inspector.models.crud import insert_data
-from inspector.utils import configure_logger, clean_up_log_handlers
 from code_analyzer.time_lock.time_lock_detector import bytecode_has_time_lock
 
 OLDEST_BLOCK = 15649595  # first block on October 2022
@@ -26,15 +26,13 @@ async def _fetch_contract_eth_balance(w3, contract_address: str) -> float:
 async def inspect_many_contracts(
         web3: Web3,
         contracts: List[str],
-        host: str,
+        logger: Logger,
         inspect_db_session: orm.Session,
 ):
-    logger = configure_logger(host)
-
     # largest tx hash, largest tx value, largest tx block number, contract ETH balance
     all_info: List[Dict] = []
 
-    logger.info(f"{host}: Inspecting contracts {contracts[0][0]} to {contracts[-1][0]}")
+    logger.info(f"Inspecting contracts {contracts[0][0]} to {contracts[-1][0]}")
     for index, contract_address in contracts:
         logger.debug(f"Contract: {contract_address} -- Getting contract data")
 
@@ -58,5 +56,3 @@ async def inspect_many_contracts(
         logger.debug("Writing to DB")
         insert_data(ContractInfo, all_info, inspect_db_session)
         logger.debug("Writing done")
-
-    clean_up_log_handlers(logger)

@@ -1,6 +1,4 @@
 import asyncio
-import configparser
-import logging
 import traceback
 from asyncio import CancelledError
 from typing import Tuple
@@ -11,13 +9,7 @@ from sqlalchemy.orm import Session
 from inspector.base import Inspector
 from inspector.models.contract.model import Contract
 from inspector.inspectors.tlsc.inspect_batch import inspect_many_blocks
-
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
+from inspector.utils import configure_logger, clean_up_log_handlers
 
 
 def _get_last_inspected_block(session: Session, after_block: int, before_block: int) -> int:
@@ -48,6 +40,8 @@ class TLSCInspector(Inspector):
             task_batch: Tuple[int, int],
             batch_size: int = 20,
     ):
+        self.logger = configure_logger(self.host)
+
         after_block, before_block = task_batch
         after_block = _get_last_inspected_block(inspect_db_session, after_block, before_block)
 
@@ -66,14 +60,16 @@ class TLSCInspector(Inspector):
                 )
             )
 
-        logger.info(f"{self.host}: Gathered {before_block - after_block} blocks to inspect")
+        self.logger.info(f"{self.host}: Gathered {before_block - after_block} blocks to inspect")
         try:
             await asyncio.gather(*tasks)
         except CancelledError:
-            logger.info(f"{self.host}: Requested to exit, cleaning up...")
+            self.logger.info(f"{self.host}: Requested to exit, cleaning up...")
         except Exception:
-            logger.error(f"{self.host}: Exited due to {traceback.print_exc()}")
+            self.logger.error(f"{self.host}: Exited due to {traceback.print_exc()}")
             raise
+        finally:
+            clean_up_log_handlers(self.logger)
 
     async def safe_inspect_many(
             self,
@@ -87,6 +83,6 @@ class TLSCInspector(Inspector):
                 self.w3,
                 after_block_number,
                 before_block_number,
-                host=self.host,
+                logger=self.logger,
                 inspect_db_session=inspect_db_session,
             ))

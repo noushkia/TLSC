@@ -23,6 +23,7 @@ class Inspector(ABC):
         self.host = rpc_endpoint.split(":")[1].strip("/")
         self.max_concurrency = max_concurrency
         self.batch_queue = Queue()
+        self.logger = None
 
     @abstractmethod
     async def inspect_many(

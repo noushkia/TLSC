@@ -1,4 +1,5 @@
 import asyncio
+from logging import Logger
 from typing import List, Tuple, Dict
 
 import aiohttp
@@ -54,7 +55,7 @@ async def inspect_many_blocks(
         web3: Web3,
         after_block_number: int,
         before_block_number: int,
-        host: str,
+        logger: Logger,
         inspect_db_session: orm.Session,
         etherscan_block_reward_url: str = None,
 ) -> None:
@@ -66,13 +67,10 @@ async def inspect_many_blocks(
     :param web3: Web3 provider
     :param after_block_number: Block number to start from
     :param before_block_number: Block number to end with
-    :param host: RPC endpoint url
+    :param logger: Logger
     :param inspect_db_session: DB session
     :return: None
     """
-    # todo: configure one for the inspector and not each function
-    logger = configure_logger(host)
-
     all_blocks: List[Dict] = []
     all_updated_info: List[Dict] = []
 
@@ -125,8 +123,6 @@ async def inspect_many_blocks(
         logger.debug("Updating DB")
         update_data(ContractInfo, all_updated_info, inspect_db_session)
         logger.debug("Updating done")
-
-    clean_up_log_handlers(logger)
 
 
 def check_block_transactions(

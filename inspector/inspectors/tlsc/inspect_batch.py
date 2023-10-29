@@ -1,3 +1,4 @@
+from logging import Logger
 from typing import List, Dict, Tuple
 
 from sqlalchemy import orm
@@ -6,7 +7,6 @@ from web3 import Web3
 from code_analyzer.time_lock.time_lock_detector import bytecode_has_potential_time_lock
 from inspector.models.contract.model import Contract
 from inspector.models.crud import insert_data
-from inspector.utils import configure_logger, clean_up_log_handlers
 
 
 async def _fetch_block_transactions(w3, block_number: int) -> List:
@@ -25,7 +25,7 @@ async def inspect_many_blocks(
         web3: Web3,
         after_block_number: int,
         before_block_number: int,
-        host: str,
+        logger: Logger,
         inspect_db_session: orm.Session,
 ) -> None:
     """
@@ -35,12 +35,10 @@ async def inspect_many_blocks(
     :param web3: Web3 provider
     :param after_block_number: Block number to start from
     :param before_block_number: Block number to end with
-    :param host: RPC endpoint url
+    :param logger: Logger
     :param inspect_db_session: DB session
     :return: None
     """
-    logger = configure_logger(host)
-
     all_tlscs: List[Dict] = []
 
     logger.info(f"Inspecting blocks {after_block_number} to {before_block_number}")
@@ -76,5 +74,3 @@ async def inspect_many_blocks(
         logger.debug("Writing to DB")
         insert_data(Contract, all_tlscs, inspect_db_session)
         logger.debug("Writing done")
-
-    clean_up_log_handlers(logger)

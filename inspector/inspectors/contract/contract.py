@@ -1,6 +1,4 @@
 import asyncio
-import configparser
-import logging
 import traceback
 from asyncio import CancelledError
 from typing import List, Tuple
@@ -10,18 +8,14 @@ from sqlalchemy import orm, select, and_
 from inspector.base import Inspector
 from inspector.inspectors.contract.inspect_batch import inspect_many_contracts
 from inspector.models.contract.model import Contract
-
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
+from inspector.utils import configure_logger, clean_up_log_handlers
 
 
 class ContractInspector(Inspector):
     async def inspect_many(self, inspect_db_session: orm.Session, task_batch: Tuple[int, int] | List[Tuple[int, str]],
                            batch_size: int = 50):
+        self.logger = configure_logger(self.host)
+
         contract_addresses = inspect_db_session.execute(
             select(Contract.block_number, Contract.contract_address).
             where(and_(task_batch[0] <= Contract.block_number, Contract.block_number <= task_batch[1]))
@@ -41,14 +35,16 @@ class ContractInspector(Inspector):
                 )
             )
 
-        logger.info(f"{self.host}: Gathered {len(contract_addresses)} contracts to inspect")
+        self.logger.info(f"{self.host}: Gathered {len(contract_addresses)} contracts to inspect")
         try:
             await asyncio.gather(*tasks)
         except CancelledError:
-            logger.info(f"{self.host}: Requested to exit, cleaning up...")
+            self.logger.info(f"{self.host}: Requested to exit, cleaning up...")
         except Exception:
-            logger.error(f"{self.host}: Exited due to {traceback.print_exc()}")
+            self.logger.error(f"{self.host}: Exited due to {traceback.print_exc()}")
             raise
+        finally:
+            clean_up_log_handlers(self.logger)
 
     async def safe_inspect_many(self, inspect_db_session: orm.Session, semaphore: asyncio.Semaphore,
                                 task_batch: Tuple[int, int] | List[str]):
@@ -56,6 +52,6 @@ class ContractInspector(Inspector):
             await self.batch_queue.put(await inspect_many_contracts(
                 self.w3,
                 contracts=task_batch,
-                host=self.host,
+                logger=self.logger,
                 inspect_db_session=inspect_db_session,
             ))
