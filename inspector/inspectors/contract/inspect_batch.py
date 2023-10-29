@@ -1,6 +1,3 @@
-import configparser
-import logging
-from pathlib import Path
 from typing import List, Dict
 
 from sqlalchemy import orm
@@ -8,21 +5,8 @@ from web3 import Web3
 
 from inspector.models.contract_info.model import ContractInfo
 from inspector.models.crud import insert_data
-from inspector.utils import get_log_handler, clean_up_log_handlers
+from inspector.utils import configure_logger, clean_up_log_handlers
 from code_analyzer.time_lock.time_lock_detector import bytecode_has_time_lock
-
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
-
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(formatter)
-
-logger.addHandler(console_handler)
 
 OLDEST_BLOCK = 15649595  # first block on October 2022
 ETH_TO_WEI = 1e18
@@ -45,9 +29,7 @@ async def inspect_many_contracts(
         host: str,
         inspect_db_session: orm.Session,
 ):
-    logs_path = Path(config['logs']['logs_path']) / config['logs']['inspectors_log_path'] / f"inspector_{host}.log"
-    log_file_handler = get_log_handler(logs_path, formatter, rotate=True)
-    logger.addHandler(log_file_handler)
+    logger = configure_logger(host)
 
     # largest tx hash, largest tx value, largest tx block number, contract ETH balance
     all_info: List[Dict] = []

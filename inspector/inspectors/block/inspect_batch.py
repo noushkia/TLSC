@@ -1,7 +1,4 @@
 import asyncio
-import configparser
-import logging
-from pathlib import Path
 from typing import List, Tuple, Dict
 
 import aiohttp
@@ -12,20 +9,7 @@ from web3 import Web3
 from inspector.models.block.model import Block
 from inspector.models.contract_info.model import ContractInfo
 from inspector.models.crud import insert_data, update_data
-from inspector.utils import get_log_handler, clean_up_log_handlers
-
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
-
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(formatter)
-
-logger.addHandler(console_handler)
+from inspector.utils import configure_logger, clean_up_log_handlers
 
 ETH_TO_WEI = 1e18
 
@@ -77,7 +61,7 @@ async def inspect_many_blocks(
     """
     Inspects many blocks and writes them to DB.
     Fetches the miner revenue from block rewards and fees. (todo: MEV)
-    Also fetched the transactions that are for time-locked contracts. (todo: ERC20 tokens)
+    Fetches the transactions that are from/to time-locked contracts. (todo: ERC20 tokens)
     :param etherscan_block_reward_url: Etherscan API url for getting the block rewards
     :param web3: Web3 provider
     :param after_block_number: Block number to start from
@@ -86,9 +70,8 @@ async def inspect_many_blocks(
     :param inspect_db_session: DB session
     :return: None
     """
-    logs_path = Path(config['logs']['logs_path']) / config['logs']['inspectors_log_path'] / f"inspector_{host}.log"
-    log_file_handler = get_log_handler(logs_path, formatter, rotate=True)
-    logger.addHandler(log_file_handler)
+    # todo: configure one for the inspector and not each function
+    logger = configure_logger(host)
 
     all_blocks: List[Dict] = []
     all_updated_info: List[Dict] = []
@@ -132,6 +115,7 @@ async def inspect_many_blocks(
 
         i += 1
 
+    # todo: return these lists and use the database in the inspector level?
     if all_blocks:
         logger.debug("Writing to DB")
         insert_data(Block, all_blocks, inspect_db_session)

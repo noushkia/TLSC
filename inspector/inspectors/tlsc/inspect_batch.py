@@ -1,6 +1,3 @@
-import configparser
-import logging
-from pathlib import Path
 from typing import List, Dict, Tuple
 
 from sqlalchemy import orm
@@ -9,20 +6,7 @@ from web3 import Web3
 from code_analyzer.time_lock.time_lock_detector import bytecode_has_potential_time_lock
 from inspector.models.contract.model import Contract
 from inspector.models.crud import insert_data
-from inspector.utils import get_log_handler, clean_up_log_handlers
-
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
-
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(formatter)
-
-logger.addHandler(console_handler)
+from inspector.utils import configure_logger, clean_up_log_handlers
 
 
 async def _fetch_block_transactions(w3, block_number: int) -> List:
@@ -55,9 +39,7 @@ async def inspect_many_blocks(
     :param inspect_db_session: DB session
     :return: None
     """
-    logs_path = Path(config['logs']['logs_path']) / config['logs']['inspectors_log_path'] / f"inspector_{host}.log"
-    log_file_handler = get_log_handler(logs_path, formatter, rotate=True)
-    logger.addHandler(log_file_handler)
+    logger = configure_logger(host)
 
     all_tlscs: List[Dict] = []
 
@@ -69,7 +51,7 @@ async def inspect_many_blocks(
 
         for tx in block_transactions:
             # else, check if it's from an already known contract
-            if tx['to'] is None:  # todo: check that are not in the db (Made a mistake and removed duplicates)
+            if tx['to'] is None:  # todo: check for duplicate address in the db (Made a mistake and removed duplicates)
                 contract_address, bytecode = await _fetch_contract(web3, tx['hash'], block_number)
                 # Ignore empty bytecodes
                 if bytecode == "0x":
