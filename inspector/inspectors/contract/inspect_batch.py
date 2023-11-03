@@ -41,8 +41,6 @@ async def inspect_many_contracts(
         if contract_balance == 0:
             continue
 
-        # todo: check time-locks
-
         # the block inspector will fetch the info related to the transactions
         all_info.append({
             "contract_address": contract_address,

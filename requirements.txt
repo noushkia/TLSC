@@ -1,8 +1,10 @@
 requests==2.31.0
-pandas~=2.1.1
+pandas==2.1.2
 numpy~=1.26.1
 psycopg2~=2.9.9
 SQLAlchemy~=2.0.22
 aiohttp~=3.8.6
-web3~=6.11.0
+web3==6.11.2
 hexbytes~=0.3.1
+configparser~=6.0.0
+mythril~=0.24.1
