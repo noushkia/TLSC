@@ -1,12 +1,4 @@
 from code_analyzer.disasm import disassemble_for_time_lock
-from mythril.ethereum.evmcontract import EVMContract
-from mythril.support.support_args import args
-
-from mythril.analysis.security import fire_lasers
-from mythril.analysis.symbolic import SymExecWrapper
-from mythril.laser.smt import SolverStatistics
-from mythril.support.loader import DynLoader
-from mythril.support.start_time import StartTime
 
 LARGE_TIME = 300
 
@@ -24,6 +16,16 @@ def bytecode_has_potential_time_lock(bytecode: str) -> bool:
 
 
 def bytecode_has_time_lock(bytecode: str) -> bool:
+    # moved here for dependency conflicts between mythril and web3
+    # todo: fix this up and use another venv for this
+    from mythril.ethereum.evmcontract import EVMContract
+    from mythril.support.support_args import args
+
+    from mythril.analysis.security import fire_lasers
+    from mythril.analysis.symbolic import SymExecWrapper
+    from mythril.laser.smt import SolverStatistics
+    from mythril.support.loader import DynLoader
+    from mythril.support.start_time import StartTime
     """
     Checks there are time locks in the source code based on the call graph of the bytecode.
 

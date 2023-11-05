@@ -6,7 +6,6 @@ from web3 import Web3
 
 from inspector.models.contract_info.model import ContractInfo
 from inspector.models.crud import insert_data
-from code_analyzer.time_lock.time_lock_detector import bytecode_has_time_lock
 
 OLDEST_BLOCK = 15649595  # first block on October 2022
 ETH_TO_WEI = 1e18
