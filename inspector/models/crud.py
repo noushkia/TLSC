@@ -5,10 +5,11 @@ from sqlalchemy import orm, insert, update
 from inspector.models.block.model import Block
 from inspector.models.contract.model import Contract
 from inspector.models.contract_info.model import ContractInfo
+from inspector.models.verified_contract.model import VerifiedContract
 
 
 def insert_data(
-        table: Type[Contract] | Type[ContractInfo] | Type[Block],
+        table: Type[Contract] | Type[ContractInfo] | Type[Block] | Type[VerifiedContract],
         values: List[Dict],
         db_session: orm.Session,
 ) -> None:

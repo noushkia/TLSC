@@ -14,6 +14,7 @@ from inspector.inspectors.block.block import BlockInspector
 from inspector.inspectors.tlsc.tlsc import TLSCInspector
 from inspector.inspectors.contract.contract import ContractInspector
 from inspector.utils import get_log_handler, clean_up_log_handlers
+from inspector.verified_contracts import inspect_verified_contracts
 from utils.db import get_inspect_session, create_tables
 
 config = configparser.ConfigParser()
@@ -49,6 +50,7 @@ class InspectorType(Enum):
     BLOCK = "block"
     CONTRACT = "contract"
     TLSC = "tlsc"
+    VERICON = "verified"
 
 
 def inspect_many(
@@ -84,6 +86,12 @@ def inspect_many(
             request_timeout=request_timeout,
         )
         logger.info(f"Starting up tlsc inspector {rpc} for blocks {task_batch[0]} to {task_batch[1]}")
+    elif inspector_type == InspectorType.VERICON:
+        inspect_verified_contracts(inspect_db_session,
+                                   args,
+                                   ETHERSCAN_API_KEYS[index % len(ETHERSCAN_API_KEYS)]
+                                   )
+        return
     else:
         raise ValueError(f"Invalid inspector type {inspector_type}")
 

@@ -43,6 +43,8 @@ if __name__ == "__main__":
 
     parser.add_argument('-mb', '--many-blocks', action='store_true', help='Inspect many blocks in given range',
                         default=None)
+    parser.add_argument('-vc', '--verified-contracts', action='store_true',
+                        help='Fetch verified contracts created in given block range from Etherscan', default=None)
     args = parser.parse_args()
 
     if args.after >= args.before:
@@ -62,6 +64,8 @@ if __name__ == "__main__":
             inspector_type = InspectorType.CONTRACT
         elif args.many_blocks is True:
             inspector_type = InspectorType.BLOCK
+        elif args.verified_contracts is True:
+            inspector_type = InspectorType.VERICON
     else:
         raise ValueError("Invalid arguments")
 

@@ -10,7 +10,6 @@ from web3 import Web3
 from inspector.models.block.model import Block
 from inspector.models.contract_info.model import ContractInfo
 from inspector.models.crud import insert_data, update_data
-from inspector.utils import configure_logger, clean_up_log_handlers
 
 ETH_TO_WEI = 1e18
 
