@@ -2,7 +2,6 @@ import logging
 from typing import Tuple, List, Dict
 
 import requests
-from aiohttp import ClientSession
 from sqlalchemy import orm, select
 
 from inspector.models.crud import insert_data
@@ -28,12 +27,12 @@ def setup_logger():
 
 def fetch_verified_contracts(contract_addresses: List[str],
                              etherscan_api_key: str,
+                             logger: logging.Logger
                              ) -> List[Dict]:
     """
     Fetches verified contracts from Etherscan API and stores them in the database
     :param contract_addresses:   list of contract addresses
     :param etherscan_api_key:   Etherscan API key
-    :param inspect_db_session:  database session
     :param logger:   logger
     :return: list of verified contracts
     """
@@ -42,6 +41,8 @@ def fetch_verified_contracts(contract_addresses: List[str],
         f"https://api.etherscan.io/api?module=contract&action=getsourcecode&address={{}}&apikey={etherscan_api_key}")
 
     all_verified_contracts = []
+    batch_size = 20
+    i = 0
     for contract_address in contract_addresses:
         etherscan_response = requests.get(etherscan_contract_url.format(contract_address)).json()
         verified = etherscan_response['result'][0]['SourceCode'] is not None
@@ -56,6 +57,9 @@ def fetch_verified_contracts(contract_addresses: List[str],
                 'source_code': etherscan_response['result'][0]['SourceCode']
             }
         )
+        i += 1
+        if i % batch_size == 0:
+            logger.info(f"Verified {i} contracts")
 
     return all_verified_contracts
 
@@ -85,7 +89,7 @@ def inspect_verified_contracts(inspect_db_session: orm.Session,
         ))
     ).all()
     contract_addresses = [contract_address for contract_address, in vc_query_response]
-    all_verified_contracts = fetch_verified_contracts(contract_addresses, etherscan_api_key)
+    all_verified_contracts = fetch_verified_contracts(contract_addresses, etherscan_api_key, logger)
 
     if all_verified_contracts:
         logger.debug("Writing to DB")

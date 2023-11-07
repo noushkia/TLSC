@@ -13,7 +13,6 @@ class VerifiedContract(Base):
     compiler_version: Mapped[str] = mapped_column(String(100), nullable=True)
     evm_version: Mapped[str] = mapped_column(String(100), nullable=True)
     proxy: Mapped[str] = mapped_column(String(100), nullable=True)
-    sourcecode: Mapped[str] = mapped_column(Text, nullable=True)  # if None -> Not verified
 
     def __repr__(self):
         return f"<Contract(contract_address='{self.contract_address}', " \
@@ -21,5 +20,4 @@ class VerifiedContract(Base):
                f"contract_name='{self.contract_name}', " \
                f"compiler_version='{self.compiler_version}', " \
                f"evm_version='{self.evm_version}', " \
-               f"proxy='{self.proxy}', " \
-               f"sourcecode='{self.sourcecode}')>"
+               f"proxy='{self.proxy}')>"
