@@ -1,0 +1,10 @@
+Most of the full blocks that are filled with large transactions are for minting/claiming tokens of DeFi protocols and NFTs.
+This shows that while filling up a block might be expensive (0.5 ETH or sth per block), it is still profitable for users to do so.
+A lot of these involve XEN NFTs.
+
+https://etherscan.io/address/0x076c0f208597cbe7a9e3ea3b8c09b47957c1e96b investigate these types of contracts that are mass created.
+
+https://etherscan.io/address/0x5df181774c478f891a6e0bd4c3af453f9baee8d6 Why so much gas is used here?
+
+18281447 Increase observation cardinality?
+& 18285102

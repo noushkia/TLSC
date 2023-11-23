@@ -162,10 +162,11 @@ cython_debug/
 *.csv
 /log
 .idea
+/plots
 
 # Verified Analysis
 verified-smart-contracts
-verified_scs.ipynb
+contract_analysis.ipynb
 
 # Disassembler
 code_analyzer/*.txt

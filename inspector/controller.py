@@ -5,7 +5,7 @@ import traceback
 import asyncio
 import logging
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 import pandas as pd
@@ -58,11 +58,12 @@ def inspect_many(
         task_batch,
         inspector_type: InspectorType,
         rpc: str,
+        attributes: List[str] = None,
         max_concurrency: int = 1,
         request_timeout: int = 500,
 ):
     inspect_db_session = get_inspect_session()
-    args = (task_batch[0], task_batch[1])
+    tasks = (task_batch[0], task_batch[1])
 
     if inspector_type == InspectorType.BLOCK:
         inspector = BlockInspector(
@@ -70,6 +71,7 @@ def inspect_many(
             max_concurrency=max_concurrency,
             request_timeout=request_timeout,
             etherscan_api_key=ETHERSCAN_API_KEYS[index % len(ETHERSCAN_API_KEYS)],
+            attributes=attributes,
         )
         logger.info(f"Starting up block inspector {rpc} for blocks {task_batch[0]} to {task_batch[1]}")
     elif inspector_type == InspectorType.CONTRACT:
@@ -88,7 +90,7 @@ def inspect_many(
         logger.info(f"Starting up tlsc inspector {rpc} for blocks {task_batch[0]} to {task_batch[1]}")
     elif inspector_type == InspectorType.VERICON:
         inspect_verified_contracts(inspect_db_session,
-                                   args,
+                                   tasks,
                                    ETHERSCAN_API_KEYS[index % len(ETHERSCAN_API_KEYS)]
                                    )
         return
@@ -97,7 +99,7 @@ def inspect_many(
 
     try:
         asyncio.run(inspector.inspect_many(
-            task_batch=args,
+            task_batch=tasks,
             inspect_db_session=inspect_db_session,
         ), debug=False)
     except Exception as e:
@@ -109,6 +111,7 @@ def run_inspectors(
         rpc_urls: pd.DataFrame,
         inspector_cnt: int,
         inspector_type: InspectorType = InspectorType.TLSC,
+        attributes: List[str] = None,
 ) -> None:
     log_file_handler = get_log_handler(logs_path, formatter, rotate=False)
     logger.addHandler(log_file_handler)
@@ -122,15 +125,16 @@ def run_inspectors(
         (
             i,  # inspectors index
             (int(task_batches[i]), int(task_batches[i + 1])),  # (after_block, before_block)
-            f"http://{rpc_urls.ip[i % len(rpc_urls)]}:8545/"  # rpc
-            # 4,                                # max_concurrency
+            f"http://{rpc_urls.ip[i % len(rpc_urls)]}:8545/",  # rpc
+            attributes,  # attributes
+            # 4,                                               # max_concurrency
         )
         for i in range(inspector_cnt)
     ]
 
     with Pool(processes=inspector_cnt) as pool:
-        processes = [pool.apply_async(inspect_many, args=(_input[0], _input[1], inspector_type, _input[2])) for _input
-                     in rpc_inputs]
+        processes = [pool.apply_async(inspect_many, args=(_input[0], _input[1], inspector_type, _input[2], _input[3]))
+                     for _input in rpc_inputs]
 
         for process in processes:
             try:
