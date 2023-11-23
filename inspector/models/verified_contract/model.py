@@ -1,11 +1,11 @@
-from sqlalchemy import String, Text
+from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from inspector.models.base import Base
 
 
 class VerifiedContract(Base):
-    __tablename__ = 'verified-contracts'
+    __tablename__ = 'verified_contracts'
 
     contract_address: Mapped[str] = mapped_column(String(100), primary_key=True, default="0x0")
     verified: Mapped[bool] = mapped_column(String(100), nullable=False, default=False)

@@ -108,11 +108,11 @@ async def inspect_many_blocks(
             "gas_fee": block_reward,  # miner_fee = transactions_fee - burnt_fee (EIP-1559)
             "gas_used": total_gas_used,
             "gas_limit": block_gas_limit,
+            "tx_count": len(block_transactions)
         })
 
         i += 1
 
-    # todo: return these lists and use the database in the inspector level?
     if all_blocks:
         logger.debug("Writing to DB")
         insert_data(Block, all_blocks, inspect_db_session)
@@ -163,3 +163,35 @@ def check_block_transactions(
             coinbase_transfer += transaction_value
 
     return larger_contracts_transactions, coinbase_transfer
+
+
+async def inspect_many_attributes(
+        web3: Web3,
+        after_block_number: int,
+        before_block_number: int,
+        logger: Logger,
+        inspect_db_session: orm.Session,
+        attributes: List[str],
+) -> None:
+    """
+    Inspects many blocks and updates them with the new attributes in DB.
+    todo: make this more generic
+    """
+    all_attributes: List[Dict] = []
+
+    logger.info(f"Inspecting blocks {after_block_number} to {before_block_number}")
+
+    for block_number in range(after_block_number, before_block_number):
+        logger.debug(f"Block: {block_number} -- Getting block attributes: {attributes}")
+        block_info = await _fetch_block_info(web3, block_number)
+        miner_address, total_gas_used, block_gas_limit, block_transactions = block_info
+        # for now, just get the number of transactions
+        all_attributes.append({
+            "block_number": block_number,
+            "tx_count": len(block_transactions)
+        })
+
+    if all_attributes:
+        logger.debug("Writing to DB")
+        update_data(Block, all_attributes, inspect_db_session)
+        logger.debug("Writing done")

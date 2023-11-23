@@ -8,4 +8,3 @@ web3==6.11.2
 hexbytes~=0.3.1
 configparser~=6.0.0
 matplotlib~=3.8.1
-# mythril~=0.24.1

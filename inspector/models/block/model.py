@@ -14,6 +14,7 @@ class Block(Base):
     gas_fee: Mapped[float] = mapped_column(Numeric, nullable=False)
     gas_used: Mapped[float] = mapped_column(Numeric, nullable=False)
     gas_limit: Mapped[float] = mapped_column(Numeric, nullable=False)
+    tx_count: Mapped[float] = mapped_column(Numeric, nullable=True)
 
     def __repr__(self):
         return f"<Block(block_number='{self.block_number}', " \
@@ -21,5 +22,6 @@ class Block(Base):
                f"coinbase_transfer='{self.coinbase_transfer}', " \
                f"base_fee_per_gas='{self.base_fee_per_gas}', " \
                f"gas_fee='{self.gas_fee}', " \
-               f"gas_used='{self.gas_used}')>" \
-               f"gas_limit='{self.gas_limit}')>"
+               f"gas_used='{self.gas_used}', " \
+               f"gas_limit='{self.gas_limit}', >" \
+               f"tx_count='{self.tx_count}', >"

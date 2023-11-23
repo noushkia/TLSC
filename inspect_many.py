@@ -45,6 +45,8 @@ if __name__ == "__main__":
                         default=None)
     parser.add_argument('-vc', '--verified-contracts', action='store_true',
                         help='Fetch verified contracts created in given block range from Etherscan', default=None)
+
+    parser.add_argument('-at', '--attrs', nargs='+', help='Attributes to inspect', default=None)
     args = parser.parse_args()
 
     if args.after >= args.before:
@@ -69,4 +71,4 @@ if __name__ == "__main__":
     else:
         raise ValueError("Invalid arguments")
 
-    run_inspectors(task_batches, rpc_urls, inspector_cnt, inspector_type=inspector_type)
+    run_inspectors(task_batches, rpc_urls, inspector_cnt, inspector_type=inspector_type, attributes=args.attrs)

@@ -45,7 +45,7 @@ def fetch_verified_contracts(contract_addresses: List[str],
     i = 0
     for contract_address in contract_addresses:
         etherscan_response = requests.get(etherscan_contract_url.format(contract_address)).json()
-        verified = etherscan_response['result'][0]['SourceCode'] is not None
+        verified = etherscan_response['result'][0]['SourceCode'] != ''
         all_verified_contracts.append(
             {
                 "contract_address": contract_address,
@@ -75,6 +75,7 @@ def inspect_verified_contracts(inspect_db_session: orm.Session,
     :param etherscan_api_key:  Etherscan API key
     :return:  None
     """
+
     logger = setup_logger()
     logger.info(f"Starting up verified contract inspector for blocks {task_batch[0]} to {task_batch[1]}")
 
@@ -83,17 +84,20 @@ def inspect_verified_contracts(inspect_db_session: orm.Session,
     vc_query_response = inspect_db_session.execute(
         select(Contract.contract_address).
         join(ContractInfo, Contract.contract_address == ContractInfo.contract_address).
-        where((task_batch[0] <= Contract.block_number) & (Contract.block_number <= task_batch[1])).
-        where(~Contract.contract_address.in_(
-            inspect_db_session.query(VerifiedContract.contract_address).all()
-        ))
+        where((task_batch[0] <= Contract.block_number) & (Contract.block_number <= task_batch[1]))
+        #todo: where(~Contract.contract_address.in_(
+        #     inspect_db_session.query(VerifiedContract.contract_address).all()
+        # ))
     ).all()
     contract_addresses = [contract_address for contract_address, in vc_query_response]
-    all_verified_contracts = fetch_verified_contracts(contract_addresses, etherscan_api_key, logger)
 
-    if all_verified_contracts:
-        logger.debug("Writing to DB")
-        insert_data(VerifiedContract, all_verified_contracts, inspect_db_session)
-        logger.debug("Writing done")
+    all_verified_contracts = []
+    try:
+        all_verified_contracts = fetch_verified_contracts(contract_addresses, etherscan_api_key, logger)
+    finally:
+        if all_verified_contracts:
+            logger.debug("Writing to DB")
+            insert_data(VerifiedContract, all_verified_contracts, inspect_db_session)
+            logger.debug("Writing done")
 
     logger.info(f"Finished verified contract inspector for blocks {task_batch[0]} to {task_batch[1]}")
